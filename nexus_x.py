@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 from rich import box
 from rich.align import Align
 from rich.console import Console
+from rich.columns import Columns
 from rich.panel import Panel
 from rich.prompt import IntPrompt, Prompt
 from rich.table import Table
@@ -28,24 +29,25 @@ ACTIONS = []
 
 def banner():
     console.clear()
-    width = max(36, min(console.width, 72))
-    title = Text("N E X U S   X", style="bold bright_red", justify="center")
-    drips = Text(" ░ ▒ ▓  ░ ▒ ▓  ░ ▒ ▓ ", style="bold red", justify="center")
-    subtitle = Text("POWER  /  INTELLIGENCE  /  SECURITY", style="bold bright_cyan", justify="center")
+    width = max(36, min(console.width, 76))
     art = Text()
-    art.append(title)
-    art.append("\n")
-    art.append(drips)
-    art.append("\n")
-    art.append(subtitle)
+    art.append("███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗\n", style="bold bright_red")
+    art.append("████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝\n", style="bold bright_red")
+    art.append("██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗\n", style="bold red")
+    art.append("██║╚██╗██║██╔══╝   ██╔██╗ ╚██╗ ██╔╝╚════██║\n", style="bold red")
+    art.append("██║ ╚████║███████╗██╔╝ ██╗ ╚████╔╝ ███████║\n", style="bold bright_red")
+    art.append("╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝\n", style="bold red")
+    art.append("             ░▒▓  X  ▓▒░", style="bold bright_red")
+    console.print(Align.center(art))
+    console.print(Align.center("[bold bright_red]NEXUS X[/] [dim]// ETHICAL SECURITY TOOLKIT[/]"))
+    console.print(Align.center("[dim]github.com/Janrahat/nexus-x[/]"))
     console.print(Panel(
-        Align.center(art),
+        Align.center("[bold green]● ONLINE[/]  [white]LOCAL MODE[/]  [bold yellow]AUTHORIZED USE ONLY[/]"),
         border_style="bright_red",
         box=box.HEAVY,
-        padding=(1, 1),
+        padding=(0, 1),
         width=width,
     ))
-    console.print(Align.center("[bold green]● ONLINE[/]  [dim]LOCAL MODE[/]  [bold yellow]● AUTHORIZED USE ONLY[/]"))
     console.print()
 
 def system_snapshot():
@@ -241,39 +243,67 @@ def show_menu():
             (8, "Password Strength Demo"),
         ]),
     ]
+
+    panels = []
     for heading, items in groups:
-        console.print(f"[bold bright_red]       ┌── [bold white]{heading}[/]")
-        for position, (number, label) in enumerate(items):
-            branch = "└──" if position == len(items) - 1 else "├──"
-            console.print(
-                f"[red]       {branch}[/] [bold bright_red][{number:02d}][/] "
-                f"[bold white]{label}[/]"
-            )
-        console.print()
-    console.print("[bold red]       └── [00] EXIT[/]")
-    console.print(Align.center("[dim]Enter a module number  •  Ctrl+C to quit[/]"))
+        lines = Text()
+        lines.append("┌─ ", style="bright_red")
+        lines.append(heading, style="bold white")
+        lines.append("\n")
+        for index, (number, label) in enumerate(items):
+            branch = "└── " if index == len(items) - 1 else "├── "
+            lines.append(branch, style="bright_red")
+            lines.append(f"[{number:02d}] ", style="bold bright_red")
+            lines.append(label, style="white")
+            lines.append("\n")
+        panels.append(Panel(
+            lines,
+            border_style="red",
+            box=box.SQUARE,
+            padding=(0, 1),
+        ))
+
+    # Three columns on wide terminals; stacked groups on phone screens.
+    if console.width >= 105:
+        console.print(Columns(panels, equal=True, expand=True, padding=(0, 1)))
+    else:
+        for panel in panels:
+            console.print(panel)
+
+    console.print(Panel(
+        Align.center("[bold bright_red][00][/]  [bold white]EXIT[/]"),
+        border_style="bright_red",
+        box=box.SQUARE,
+        padding=(0, 1),
+    ))
+    console.print(Align.center(
+        "[dim]Select a module number  •  Ctrl+C to quit[/]"
+    ))
 
 def main():
     while True:
         banner()
         console.print(
             f"[bold bright_cyan]DEVICE[/] [white]{platform.system()} {platform.release()}[/]  "
-            f"[bold bright_cyan]PY[/] [white]{platform.python_version()}[/]"
+            f"[bold bright_cyan]PYTHON[/] [white]{platform.python_version()}[/]"
         )
-        console.print("[bold green]● READY[/]  [dim]LOCAL TERMINAL[/]  [bold yellow]● PERMISSION REQUIRED FOR REMOTE TESTS[/]\n")
         show_menu()
         try:
-            choice = IntPrompt.ask("[bold bright_red]NEXUS X[/] [white]SELECT[/]", default=0)
+            choice = IntPrompt.ask(
+                "[bold bright_red]NEXUS-X[/] [white]SELECT MODULE[/]",
+                default=0,
+            )
         except (KeyboardInterrupt, EOFError):
             break
+
         if choice == 0:
             break
         if 1 <= choice <= len(ACTIONS):
             console.clear()
             console.print(Panel(
-                f"[bold bright_red]NEXUS X[/]  [bold white]// {ACTIONS[choice - 1][0].upper()}[/]",
-                border_style=RED,
-                box=box.DOUBLE,
+                f"[bold bright_red]NEXUS X[/] [white]// {ACTIONS[choice - 1][0].upper()}[/]",
+                border_style="bright_red",
+                box=box.HEAVY,
             ))
             try:
                 ACTIONS[choice - 1][2]()
@@ -281,12 +311,16 @@ def main():
                 console.print(f"[bold red]MODULE ERROR[/] [white]{exc}[/]")
             console.input("\n[dim]ENTER = BACK TO MAIN MENU[/]")
         else:
-            console.print("[yellow]Invalid module ID.[/]")
+            console.print("[yellow]Invalid module ID. Choose 00-08.[/]")
             console.input("[dim]Press Enter to continue...[/]")
+
     console.print(Panel(
-        Align.center("[bold bright_red]NEXUS X OFFLINE[/]\n[dim]Stay safe. Test only with permission.[/]"),
-        border_style=RED,
-        box=box.DOUBLE,
+        Align.center(
+            "[bold bright_red]NEXUS X OFFLINE[/]\n"
+            "[dim]Stay safe. Test only with permission.[/]"
+        ),
+        border_style="bright_red",
+        box=box.HEAVY,
     ))
 
 if __name__ == "__main__":
