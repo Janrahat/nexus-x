@@ -29,23 +29,24 @@ ACTIONS = []
 def banner():
     console.clear()
     width = max(36, min(console.width, 72))
-    logo = Text()
-    logo.append("NEXUS", style="bold bright_red")
-    logo.append(" X", style="bold white")
-    subtitle = Text("POWER  /  INTELLIGENCE  /  SECURITY", style="bold bright_cyan")
-    body = Align.center(Text.assemble(logo, "\n", subtitle))
+    title = Text("N E X U S   X", style="bold bright_red", justify="center")
+    drips = Text(" ░ ▒ ▓  ░ ▒ ▓  ░ ▒ ▓ ", style="bold red", justify="center")
+    subtitle = Text("POWER  /  INTELLIGENCE  /  SECURITY", style="bold bright_cyan", justify="center")
+    art = Text()
+    art.append(title)
+    art.append("\n")
+    art.append(drips)
+    art.append("\n")
+    art.append(subtitle)
     console.print(Panel(
-        body,
-        border_style=RED,
-        box=box.DOUBLE,
+        Align.center(art),
+        border_style="bright_red",
+        box=box.HEAVY,
         padding=(1, 1),
-        title="[bold white] DEFENSIVE SECURITY CONSOLE [/]",
-        subtitle="[dim] MOBILE EDITION [/]",
         width=width,
     ))
     console.print(Align.center("[bold green]● ONLINE[/]  [dim]LOCAL MODE[/]  [bold yellow]● AUTHORIZED USE ONLY[/]"))
     console.print()
-
 
 def system_snapshot():
     return [
@@ -224,20 +225,33 @@ ACTIONS = [
 
 
 def show_menu():
-    console.print(Panel(
-        "[bold bright_red]01[/]  [bold white]SYSTEM INTEL[/]       [bold bright_red]05[/]  [bold white]SSL / TLS[/]\n"
-        "[bold bright_red]02[/]  [bold white]IP / DNS LOOKUP[/]    [bold bright_red]06[/]  [bold white]URL ANALYZER[/]\n"
-        "[bold bright_red]03[/]  [bold white]TCP PORT CHECK[/]     [bold bright_red]07[/]  [bold white]FILE SHA-256[/]\n"
-        "[bold bright_red]04[/]  [bold white]WEB HEADERS[/]        [bold bright_red]08[/]  [bold white]PASSWORD DEMO[/]\n"
-        "[bold red]00[/]  [bold red]EXIT CONSOLE[/]",
-        title="[bold bright_cyan] NEXUS X // MODULES [/]",
-        subtitle="[dim]Choose module ID[/]",
-        border_style=RED,
-        box=box.DOUBLE,
-        padding=(1, 2),
-    ))
-    console.print("[dim]Authorized defensive diagnostics only[/]")
-
+    groups = [
+        ("NETWORK SCANNER", [
+            (2, "IP / DNS Intelligence"),
+            (3, "Limited TCP Port Check"),
+            (4, "Website Security Headers"),
+            (5, "SSL / TLS Certificate"),
+        ]),
+        ("OSINT / INSPECTION", [
+            (6, "URL Analyzer"),
+        ]),
+        ("UTILITIES", [
+            (1, "System Intelligence"),
+            (7, "Local File SHA-256"),
+            (8, "Password Strength Demo"),
+        ]),
+    ]
+    for heading, items in groups:
+        console.print(f"[bold bright_red]       ┌── [bold white]{heading}[/]")
+        for position, (number, label) in enumerate(items):
+            branch = "└──" if position == len(items) - 1 else "├──"
+            console.print(
+                f"[red]       {branch}[/] [bold bright_red][{number:02d}][/] "
+                f"[bold white]{label}[/]"
+            )
+        console.print()
+    console.print("[bold red]       └── [00] EXIT[/]")
+    console.print(Align.center("[dim]Enter a module number  •  Ctrl+C to quit[/]"))
 
 def main():
     while True:
