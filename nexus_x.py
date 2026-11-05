@@ -29,15 +29,14 @@ def banner():
         " ▌  ▌  ▌ ▌   ▌  ▌  ▌ ▌   ▌  ▌    ▌ ▌\n"
         "  ▌    ▌     ▌       ▌     ▌       ▌"
     )
-    logo_text = Text(logo, style="bold bright_red", justify="center")
+    header = Text(logo + "\n", style="bold bright_red", justify="center")
+    header.append("POWER  /  INTELLIGENCE  /  SECURITY\n", style="bold bright_cyan")
+    header.append("NEXUS X v2.0  •  28 ETHICAL TOOLS\n", style="dim")
+    header.append("github.com/Janrahat/nexus-x\n", style="dim")
+    header.append("● LOCAL READY  ", style="bold green")
+    header.append("● AUTHORIZED USE ONLY", style="bold yellow")
     C.print(Panel(
-        Align.center(
-            logo_text,
-            "[bold bright_cyan]POWER  /  INTELLIGENCE  /  SECURITY[/]\n"
-            "[dim]NEXUS X v2.0  •  28 ETHICAL TOOLS[/]\n"
-            "[dim]github.com/Janrahat/nexus-x[/]\n"
-            "[bold green]● LOCAL READY[/]  [bold yellow]● AUTHORIZED USE ONLY[/]"
-        ),
+        Align.center(header),
         border_style=RED,
         box=box.HEAVY,
         padding=(0, 1)
