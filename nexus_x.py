@@ -120,7 +120,7 @@ def t09():
 
 def t10():
     domain=Prompt.ask("[cyan]Public domain name[/]").strip().lower()
-    if not re.fullmatch(r"[a-z0-9.-]+\\.[a-z]{2,}",domain): raise ValueError("Enter a domain such as example.com")
+    if not re.fullmatch(r"[a-z0-9.-]+\.[a-z]{2,}",domain): raise ValueError("Enter a domain such as example.com")
     s,h,_,body=get("https://rdap.org/domain/"+urllib.parse.quote(domain),limit=9000)
     d=json.loads(body.decode("utf-8","replace"))
     events=d.get("events",[])
@@ -134,7 +134,7 @@ def t11():
 
 def t12():
     email=Prompt.ask("[cyan]Email address (format check only)[/]").strip()
-    ok=bool(re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_{}|~-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}",email))
+    ok=bool(re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_{}|~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",email))
     show("EMAIL FORMAT VALIDATOR",[("INPUT",email),("FORMAT","VALID" if ok else "INVALID"),("MAILBOX CHECK","not performed")])
 
 def t13():
@@ -184,7 +184,7 @@ def t19():
 
 def t20():
     pw=Prompt.ask("[yellow]Demo phrase only — never enter a real password[/]",password=True)
-    rows=[("12+ characters",len(pw)>=12),("Uppercase",bool(re.search(r"[A-Z]",pw))),("Lowercase",bool(re.search(r"[a-z]",pw))),("Number",bool(re.search(r"\\d",pw))),("Symbol",bool(re.search(r"[^A-Za-z0-9]",pw)))]
+    rows=[("12+ characters",len(pw)>=12),("Uppercase",bool(re.search(r"[A-Z]",pw))),("Lowercase",bool(re.search(r"[a-z]",pw))),("Number",bool(re.search(r"\d",pw))),("Symbol",bool(re.search(r"[^A-Za-z0-9]",pw)))]
     show("PASSWORD STRENGTH DEMO",[(k,"PASS" if v else "NEEDS WORK") for k,v in rows])
     C.print("[dim]Local heuristic only; not a security guarantee.[/]")
 
