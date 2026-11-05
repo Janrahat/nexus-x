@@ -21,7 +21,6 @@ from rich.text import Text
 console = Console()
 RED = "bright_red"
 CYAN = "bright_cyan"
-GREEN = "bright_green"
 MUTED = "grey70"
 
 ACTIONS = []
@@ -58,18 +57,18 @@ def system_snapshot():
 
 
 def show_table(title, rows):
-    t = Table(
+    table = Table(
         title=f"[bold bright_cyan]{title}[/]",
         box=box.ROUNDED,
         border_style=CYAN,
         header_style="bold bright_red",
         expand=True,
     )
-    t.add_column("FIELD", style="bold bright_red", ratio=1)
-    t.add_column("RESULT", style="white", ratio=2, overflow="fold")
+    table.add_column("FIELD", style="bold bright_red", ratio=1)
+    table.add_column("RESULT", style="white", ratio=2, overflow="fold")
     for key, value in rows:
-        t.add_row(str(key), str(value))
-    console.print(t)
+        table.add_row(str(key), str(value))
+    console.print(table)
 
 
 def authorized():
@@ -143,7 +142,7 @@ def website_headers():
             status, headers, final_url = response.status, response.headers, response.url
     except urllib.error.HTTPError as exc:
         status, headers, final_url = exc.code, exc.headers, exc.url
-    rows = [
+    show_table("WEBSITE SECURITY HEADERS", [
         ("HTTP STATUS", status), ("FINAL URL", final_url),
         ("HTTPS", parsed.scheme == "https"),
         ("HSTS", headers.get("Strict-Transport-Security", "missing")),
@@ -151,8 +150,7 @@ def website_headers():
         ("X-CONTENT-TYPE", headers.get("X-Content-Type-Options", "missing")),
         ("X-FRAME", headers.get("X-Frame-Options", "missing")),
         ("REFERRER", headers.get("Referrer-Policy", "missing")),
-    ]
-    show_table("WEBSITE SECURITY HEADERS", rows)
+    ])
 
 
 def tls_check():
@@ -241,9 +239,7 @@ def show_menu():
         menu.add_row(f"{index:02d}", name, description)
     menu.add_row("[bold red]00[/]", "[bold red]Exit console[/]", "Close NEXUS X")
     console.print(menu)
-    console.print(
-        Align.center("[dim]Select a module number  •  Ctrl+C to quit[/]")
-    )
+    console.print(Align.center("[dim]Select a module number  •  Ctrl+C to quit[/]"))
 
 
 def main():
