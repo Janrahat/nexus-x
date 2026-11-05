@@ -17,14 +17,22 @@ RED = "bright_red"
 UA = "NEXUS-X/2.0 defensive diagnostics"
 
 def banner():
-    # Termux-friendly redraw: clear the visible screen and scrollback so old
-    # menus/logos do not stack above the current menu on Android terminals.
+    # Clear the previous screen before drawing one compact mobile header.
     C.file.write("\033[3J\033[2J\033[H")
     C.file.flush()
+    logo = (
+        "█   █ █████ █   █ █████ █████   █   █\n"
+        "██  █ █     ██ ██ █     █   █    █ █\n"
+        "█ █ █ ████  █ █ █ ████  █████     █\n"
+        "█  ██ █     █   █ █     ██        █\n"
+        "█   █ █████ █   █ █████ █  ██   █   █\n"
+        " ▌  ▌  ▌ ▌   ▌  ▌  ▌ ▌   ▌  ▌    ▌ ▌\n"
+        "  ▌    ▌     ▌       ▌     ▌       ▌"
+    )
+    logo_text = Text(logo, style="bold bright_red", justify="center")
     C.print(Panel(
         Align.center(
-            "[bold bright_red]N E X U S   X[/]\n"
-            "[bold bright_red]▓ ▓ ▓  D R I P  /  P I X E L  ▓ ▓ ▓[/]\n"
+            logo_text,
             "[bold bright_cyan]POWER  /  INTELLIGENCE  /  SECURITY[/]\n"
             "[dim]NEXUS X v2.0  •  28 ETHICAL TOOLS[/]\n"
             "[dim]github.com/Janrahat/nexus-x[/]\n"
