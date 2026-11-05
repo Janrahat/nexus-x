@@ -19,7 +19,7 @@ UA = "NEXUS-X/2.0 defensive diagnostics"
 def banner():
     # Termux-friendly redraw: clear the visible screen and scrollback so old
     # menus/logos do not stack above the current menu on Android terminals.
-    C.file.write("\\033[3J\\033[2J\\033[H")
+    C.file.write("\033[3J\033[2J\033[H")
     C.file.flush()
     C.print(Panel(
         Align.center(
