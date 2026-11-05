@@ -224,56 +224,56 @@ ACTIONS = [
 
 
 def show_menu():
-    menu = Table(
-        title="[bold bright_cyan] MODULE SELECTOR [/]",
-        box=box.ROUNDED,
+    console.print(Panel(
+        "[bold bright_red]01[/]  [bold white]SYSTEM INTEL[/]       [bold bright_red]05[/]  [bold white]SSL / TLS[/]\n"
+        "[bold bright_red]02[/]  [bold white]IP / DNS LOOKUP[/]    [bold bright_red]06[/]  [bold white]URL ANALYZER[/]\n"
+        "[bold bright_red]03[/]  [bold white]TCP PORT CHECK[/]     [bold bright_red]07[/]  [bold white]FILE SHA-256[/]\n"
+        "[bold bright_red]04[/]  [bold white]WEB HEADERS[/]        [bold bright_red]08[/]  [bold white]PASSWORD DEMO[/]\n"
+        "[bold red]00[/]  [bold red]EXIT CONSOLE[/]",
+        title="[bold bright_cyan] NEXUS X // MODULES [/]",
+        subtitle="[dim]Choose module ID[/]",
         border_style=RED,
-        header_style="bold white",
-        expand=True,
-        pad_edge=False,
-    )
-    menu.add_column("ID", style="bold bright_red", width=4, justify="center")
-    menu.add_column("MODULE", style="bold white", ratio=2)
-    menu.add_column("DESCRIPTION", style=MUTED, ratio=3, overflow="fold")
-    for index, (name, description, _) in enumerate(ACTIONS, 1):
-        menu.add_row(f"{index:02d}", name, description)
-    menu.add_row("[bold red]00[/]", "[bold red]Exit console[/]", "Close NEXUS X")
-    console.print(menu)
-    console.print(Align.center("[dim]Select a module number  •  Ctrl+C to quit[/]"))
+        box=box.DOUBLE,
+        padding=(1, 2),
+    ))
+    console.print("[dim]Authorized defensive diagnostics only[/]")
 
 
 def main():
-    banner()
-    show_table("DEVICE STATUS", system_snapshot())
     while True:
+        banner()
+        console.print(
+            f"[bold bright_cyan]DEVICE[/] [white]{platform.system()} {platform.release()}[/]  "
+            f"[bold bright_cyan]PY[/] [white]{platform.python_version()}[/]"
+        )
+        console.print("[bold green]● READY[/]  [dim]LOCAL TERMINAL[/]  [bold yellow]● PERMISSION REQUIRED FOR REMOTE TESTS[/]\n")
         show_menu()
         try:
-            choice = IntPrompt.ask("\n[bold bright_red]NEXUS X[/]  [white]SELECT MODULE[/]", default=0)
+            choice = IntPrompt.ask("[bold bright_red]NEXUS X[/] [white]SELECT[/]", default=0)
         except (KeyboardInterrupt, EOFError):
             break
         if choice == 0:
             break
         if 1 <= choice <= len(ACTIONS):
-            console.print()
+            console.clear()
             console.print(Panel(
-                f"[bold white]{ACTIONS[choice - 1][0]}[/]",
+                f"[bold bright_red]NEXUS X[/]  [bold white]// {ACTIONS[choice - 1][0].upper()}[/]",
                 border_style=RED,
-                box=box.ROUNDED,
+                box=box.DOUBLE,
             ))
             try:
                 ACTIONS[choice - 1][2]()
             except Exception as exc:
                 console.print(f"[bold red]MODULE ERROR[/] [white]{exc}[/]")
-            console.input("\n[dim]Press Enter to return to the module selector...[/]")
-            console.print()
+            console.input("\n[dim]ENTER = BACK TO MAIN MENU[/]")
         else:
-            console.print("[yellow]Invalid selection. Choose a listed module.[/]")
+            console.print("[yellow]Invalid module ID.[/]")
+            console.input("[dim]Press Enter to continue...[/]")
     console.print(Panel(
         Align.center("[bold bright_red]NEXUS X OFFLINE[/]\n[dim]Stay safe. Test only with permission.[/]"),
         border_style=RED,
         box=box.DOUBLE,
     ))
-
 
 if __name__ == "__main__":
     main()
