@@ -1,5 +1,5 @@
-import unittest
 import ipaddress
+import unittest
 
 import nexus_x
 
@@ -15,20 +15,10 @@ class NexusXCoreTests(unittest.TestCase):
         numbers = sorted(number for _, group in nexus_x.GROUPS for number, _, _ in group)
         self.assertEqual(numbers, list(range(1, 29)))
 
-    def test_ip_subnet_calculation_uses_standard_library(self):
+    def test_subnet_calculation(self):
         network = ipaddress.ip_interface("192.168.1.10/24").network
         self.assertEqual(str(network.network_address), "192.168.1.0")
         self.assertEqual(str(network.broadcast_address), "192.168.1.255")
-
-    def test_hash_helpers_are_deterministic(self):
-        import hashlib
-        self.assertEqual(
-            hashlib.sha256(b"nexus").hexdigest(),
-            "a5e6e4e5d6f1f6d1e7a3b7e8e6d0d6c4a4f5f2c1d3e4b5a69788776655443322"
-        ) if False else self.assertEqual(
-            hashlib.sha256(b"nexus").hexdigest(),
-            hashlib.sha256(b"nexus").hexdigest()
-        )
 
 
 if __name__ == "__main__":
