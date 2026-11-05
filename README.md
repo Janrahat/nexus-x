@@ -1,45 +1,83 @@
-# NEXUS X — ULTIMATE CYBER FRAMEWORK
+# NEXUS X v2.0 — Defensive Security Toolkit
 
-**POWER. INTELLIGENCE. SECURITY.**
+**POWER / INTELLIGENCE / SECURITY**
 
-A modular Python cybersecurity toolkit for Kali Linux, Termux, Debian, and Ubuntu. Designed for authorized security testing, network diagnostics, and defensive research only.
+NEXUS X is a Python terminal toolkit for Termux, Kali Linux, Debian, Ubuntu, and other Python 3 systems. It contains 28 defensive diagnostics and local utilities. It is designed for systems you own or are explicitly authorized to assess.
 
-## Features
-- System and device information
-- IP address and DNS intelligence
-- TCP port checks for explicitly authorized targets
-- Website HTTP security-header inspection
-- SSL/TLS certificate inspection
-- Common-subdomain DNS checks
-- URL parsing and local file SHA-256 metadata
-- Password-strength heuristics (never enter a real password)
-- JSON report generation
+## 28 tools
 
-## Requirements
-- Python 3.10+
-- Install dependencies: `python -m pip install -r requirements.txt`
+### Network scanner
+1. Website security-header audit
+2. Website information
+3. Website URL analyzer
+4. IP address analyzer
+5. Authorized TCP port check (small user-selected port list)
+6. Authorized host reachability
+7. Local device / network information
+8. DNS address resolver
+9. TLS certificate inspector
 
-## Install
+### OSINT / inspection
+10. Public domain RDAP lookup
+11. DNS record resolution
+12. Email format validator (syntax only; does not verify mailbox existence)
+13. Manual public search-query builder
+14. robots.txt viewer (own/authorized website)
+15. sitemap viewer (own/authorized website)
+16. HTTP response profile
+17. TLS certificate PEM viewer
+18. Public IP geolocation summary (approximate IP-level data)
+19. security.txt viewer (own/authorized website)
 
-### Kali / Debian / Ubuntu
-```bash
-chmod +x install_kali.sh
-./install_kali.sh
-```
+### Utilities / defense
+20. Password-strength demo (use sample phrases only; never enter a real password)
+21. Secure random password generator
+22. Text hash generator (SHA-256 / SHA-512)
+23. Local file SHA-256
+24. Base64 encoder / decoder
+25. URL encoder / decoder
+26. JSON formatter
+27. IP subnet calculator
+28. JWT local decoder (does not verify signatures)
+
+## Installation
 
 ### Termux
 ```bash
-chmod +x install_termux.sh
-./install_termux.sh
+pkg update && pkg upgrade -y
+pkg install git python -y
+git clone https://github.com/Janrahat/nexus-x.git
+cd nexus-x
+python -m pip install -r requirements.txt
+python nexus_x.py
 ```
 
-Then run:
+### Kali Linux
 ```bash
-python main.py
+sudo apt update
+sudo apt install -y git python3 python3-venv
+git clone https://github.com/Janrahat/nexus-x.git
+cd nexus-x
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python nexus_x.py
 ```
 
-## Authorization and safety
-Only test systems you own or have explicit written permission to assess. Remote modules ask for authorization before running. Use conservative timeouts and avoid disruptive scanning. This project is not an exploitation framework.
+## Tests
+Run the built-in test suite:
+```bash
+python -m unittest discover -s tests -v
+```
+
+## Important limitations and safe use
+- Only run remote checks against systems you own or have explicit permission to assess.
+- Port checking is intentionally limited and is not a full network scanner.
+- Email validation checks syntax only; mailbox existence is not tested.
+- IP geolocation is approximate and must not be used to identify a person's precise location.
+- A JWT decode only displays its header and payload; it does not validate the signature or trust the token.
+- Password strength output is a local heuristic, not a guarantee.
+- Results depend on network access, DNS, remote server behavior, and the Python environment. Review findings manually.
 
 ## Project status
-Initial source upload. Some checks are intentionally lightweight and platform-dependent; see module notes and test results before relying on findings.
+NEXUS X v2.0 is an evolving defensive toolkit. A menu entry is not proof of a fully validated feature: test each tool in your own environment before relying on it. Contributions and bug reports are welcome.
