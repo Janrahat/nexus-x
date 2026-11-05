@@ -1,113 +1,283 @@
 #!/usr/bin/env python3
-"""NEXUS X: defensive diagnostics for systems you own or are authorized to test."""
-import hashlib, ipaddress, platform, socket, ssl, urllib.request, urllib.error, re
+"""NEXUS X: mobile-friendly defensive diagnostics for authorized systems."""
+import hashlib
+import ipaddress
+import platform
+import re
+import socket
+import ssl
+import urllib.error
+import urllib.request
 from urllib.parse import urlparse
+
+from rich import box
+from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
+from rich.prompt import IntPrompt, Prompt
 from rich.table import Table
-from rich.prompt import Prompt, IntPrompt
+from rich.text import Text
 
 console = Console()
 RED = "bright_red"
+CYAN = "bright_cyan"
+GREEN = "bright_green"
+MUTED = "grey70"
+
+ACTIONS = []
+
 
 def banner():
-    console.print(Panel("[bold bright_red]N E X U S   X[/]\n[white]POWER. INTELLIGENCE. SECURITY.[/]", border_style=RED))
-    console.print("[dim]Authorized defensive diagnostics only[/]\n")
+    console.clear()
+    width = max(36, min(console.width, 72))
+    logo = Text()
+    logo.append("NEXUS", style="bold bright_red")
+    logo.append(" X", style="bold white")
+    subtitle = Text("POWER  /  INTELLIGENCE  /  SECURITY", style="bold bright_cyan")
+    body = Align.center(Text.assemble(logo, "\n", subtitle))
+    console.print(Panel(
+        body,
+        border_style=RED,
+        box=box.DOUBLE,
+        padding=(1, 1),
+        title="[bold white] DEFENSIVE SECURITY CONSOLE [/]",
+        subtitle="[dim] MOBILE EDITION [/]",
+        width=width,
+    ))
+    console.print(Align.center("[bold green]● ONLINE[/]  [dim]LOCAL MODE[/]  [bold yellow]● AUTHORIZED USE ONLY[/]"))
+    console.print()
 
-def table(title, rows):
-    t = Table(title=title, border_style=RED)
-    t.add_column("FIELD", style="bright_red")
-    t.add_column("RESULT", overflow="fold")
-    for k, v in rows: t.add_row(str(k), str(v))
+
+def system_snapshot():
+    return [
+        ("PLATFORM", platform.system() + " " + platform.release()),
+        ("PYTHON", platform.python_version()),
+        ("DEVICE", platform.machine()),
+        ("HOST", socket.gethostname()[:24]),
+    ]
+
+
+def show_table(title, rows):
+    t = Table(
+        title=f"[bold bright_cyan]{title}[/]",
+        box=box.ROUNDED,
+        border_style=CYAN,
+        header_style="bold bright_red",
+        expand=True,
+    )
+    t.add_column("FIELD", style="bold bright_red", ratio=1)
+    t.add_column("RESULT", style="white", ratio=2, overflow="fold")
+    for key, value in rows:
+        t.add_row(str(key), str(value))
     console.print(t)
 
+
 def authorized():
-    return Prompt.ask("[yellow]Do you own this target or have written permission? Type YES[/]").strip() == "YES"
+    answer = Prompt.ask(
+        "[bold yellow]Confirm you own this target or have permission. Type YES[/]",
+        default="NO",
+    ).strip()
+    return answer == "YES"
+
 
 def system_info():
-    table("SYSTEM INTELLIGENCE", [("OS", platform.platform()), ("Python", platform.python_version()), ("Machine", platform.machine()), ("Hostname", socket.gethostname())])
+    show_table("SYSTEM INTELLIGENCE", system_snapshot())
+
 
 def ip_dns():
-    host = Prompt.ask("IP address or hostname").strip()
+    host = Prompt.ask("[bright_cyan]IP address or hostname[/]").strip()
     try:
         ip = ipaddress.ip_address(host)
-        rows = [("Address", ip), ("Version", ip.version), ("Private", ip.is_private), ("Global", ip.is_global), ("Loopback", ip.is_loopback), ("Reserved", ip.is_reserved)]
+        rows = [
+            ("ADDRESS", ip), ("VERSION", ip.version),
+            ("PRIVATE", ip.is_private), ("GLOBAL", ip.is_global),
+            ("LOOPBACK", ip.is_loopback), ("RESERVED", ip.is_reserved),
+        ]
     except ValueError:
-        rows = [("Hostname", host), ("Resolved addresses", ", ".join(sorted({x[4][0] for x in socket.getaddrinfo(host, None)})))]
-    table("IP / DNS INTELLIGENCE", rows)
+        addresses = sorted({item[4][0] for item in socket.getaddrinfo(host, None)})
+        rows = [("HOSTNAME", host), ("RESOLVED", ", ".join(addresses))]
+    show_table("IP / DNS INTELLIGENCE", rows)
+
 
 def port_check():
     if not authorized():
-        console.print("[yellow]Cancelled: authorization not confirmed.[/]"); return
-    host = Prompt.ask("Authorized host").strip()
-    try: socket.getaddrinfo(host, None)
-    except OSError as e: console.print(f"[red]DNS error: {e}[/]"); return
-    ports = Prompt.ask("Comma-separated TCP ports", default="22,80,443,8080")
-    found=[]
-    for raw in ports.split(",")[:32]:
-        try: port=int(raw.strip())
-        except ValueError: continue
-        if not 1 <= port <= 65535: continue
+        console.print("[yellow]Cancelled: authorization not confirmed.[/]")
+        return
+    host = Prompt.ask("[bright_cyan]Authorized host[/]").strip()
+    try:
+        socket.getaddrinfo(host, None)
+    except OSError as exc:
+        console.print(f"[red]DNS error: {exc}[/]")
+        return
+    raw_ports = Prompt.ask("[bright_cyan]TCP ports (max 32)[/]", default="22,80,443,8080")
+    results = []
+    for raw in raw_ports.split(",")[:32]:
         try:
-            with socket.create_connection((host, port), timeout=1.5): found.append((port, "open"))
-        except OSError: found.append((port, "closed / filtered"))
-    table("LIMITED TCP PORT CHECK", found)
+            port = int(raw.strip())
+        except ValueError:
+            continue
+        if not 1 <= port <= 65535:
+            continue
+        try:
+            with socket.create_connection((host, port), timeout=1.5):
+                state = "[green]OPEN[/]"
+        except OSError:
+            state = "[dim]CLOSED / FILTERED[/]"
+        results.append((port, state))
+    show_table("LIMITED TCP PORT CHECK", results or [("RESULT", "No valid ports supplied")])
+
 
 def website_headers():
     if not authorized():
-        console.print("[yellow]Cancelled: authorization not confirmed.[/]"); return
-    value=Prompt.ask("Authorized website URL").strip()
-    if "://" not in value: value="https://"+value
-    p=urlparse(value)
-    if p.scheme not in ("http","https") or not p.hostname: raise ValueError("Only valid HTTP/HTTPS URLs are accepted.")
-    req=urllib.request.Request(value, headers={"User-Agent":"NEXUS-X/1.0"}, method="HEAD")
+        console.print("[yellow]Cancelled: authorization not confirmed.[/]")
+        return
+    value = Prompt.ask("[bright_cyan]Authorized website URL[/]").strip()
+    if "://" not in value:
+        value = "https://" + value
+    parsed = urlparse(value)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise ValueError("Only valid HTTP/HTTPS URLs are accepted.")
+    request = urllib.request.Request(value, headers={"User-Agent": "NEXUS-X/2.0"}, method="HEAD")
     try:
-        with urllib.request.urlopen(req, timeout=5) as r: status, headers, final=r.status, r.headers, r.url
-    except urllib.error.HTTPError as e: status, headers, final=e.code, e.headers, e.url
-    table("WEBSITE SECURITY HEADERS", [("HTTP status",status),("Final URL",final),("HTTPS",p.scheme=="https"),("HSTS",headers.get("Strict-Transport-Security","missing")),("CSP",headers.get("Content-Security-Policy","missing")),("X-Content-Type-Options",headers.get("X-Content-Type-Options","missing")),("X-Frame-Options",headers.get("X-Frame-Options","missing")),("Referrer-Policy",headers.get("Referrer-Policy","missing"))])
+        with urllib.request.urlopen(request, timeout=5) as response:
+            status, headers, final_url = response.status, response.headers, response.url
+    except urllib.error.HTTPError as exc:
+        status, headers, final_url = exc.code, exc.headers, exc.url
+    rows = [
+        ("HTTP STATUS", status), ("FINAL URL", final_url),
+        ("HTTPS", parsed.scheme == "https"),
+        ("HSTS", headers.get("Strict-Transport-Security", "missing")),
+        ("CSP", headers.get("Content-Security-Policy", "missing")),
+        ("X-CONTENT-TYPE", headers.get("X-Content-Type-Options", "missing")),
+        ("X-FRAME", headers.get("X-Frame-Options", "missing")),
+        ("REFERRER", headers.get("Referrer-Policy", "missing")),
+    ]
+    show_table("WEBSITE SECURITY HEADERS", rows)
+
 
 def tls_check():
     if not authorized():
-        console.print("[yellow]Cancelled: authorization not confirmed.[/]"); return
-    host=Prompt.ask("Authorized TLS hostname").strip()
-    ctx=ssl.create_default_context()
-    with socket.create_connection((host,443),timeout=5) as sock:
-        with ctx.wrap_socket(sock,server_hostname=host) as ss:
-            cert=ss.getpeercert()
-            table("TLS CERTIFICATE", [("TLS version",ss.version()),("Cipher",ss.cipher()),("Subject",cert.get("subject")),("Issuer",cert.get("issuer")),("Expires",cert.get("notAfter"))])
+        console.print("[yellow]Cancelled: authorization not confirmed.[/]")
+        return
+    host = Prompt.ask("[bright_cyan]Authorized TLS hostname[/]").strip()
+    context = ssl.create_default_context()
+    with socket.create_connection((host, 443), timeout=5) as sock:
+        with context.wrap_socket(sock, server_hostname=host) as secure:
+            cert = secure.getpeercert()
+            show_table("TLS CERTIFICATE", [
+                ("TLS VERSION", secure.version()), ("CIPHER", secure.cipher()),
+                ("SUBJECT", cert.get("subject")), ("ISSUER", cert.get("issuer")),
+                ("EXPIRES", cert.get("notAfter")),
+            ])
+
 
 def url_info():
-    value=Prompt.ask("URL").strip()
-    if "://" not in value: value="https://"+value
-    p=urlparse(value)
-    if p.scheme not in ("http","https") or not p.hostname: raise ValueError("Invalid HTTP/HTTPS URL.")
-    table("URL ANALYSIS", [("Scheme",p.scheme),("Host",p.hostname),("Port",p.port or "default"),("Path",p.path or "/"),("Query",p.query),("Fragment",p.fragment)])
+    value = Prompt.ask("[bright_cyan]URL to inspect[/]").strip()
+    if "://" not in value:
+        value = "https://" + value
+    parsed = urlparse(value)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise ValueError("Invalid HTTP/HTTPS URL.")
+    show_table("URL ANALYSIS", [
+        ("SCHEME", parsed.scheme), ("HOST", parsed.hostname),
+        ("PORT", parsed.port or "default"), ("PATH", parsed.path or "/"),
+        ("QUERY", parsed.query or "none"), ("FRAGMENT", parsed.fragment or "none"),
+    ])
+
 
 def hash_file():
-    path=Prompt.ask("Local file path").strip()
-    h=hashlib.sha256()
-    with open(path,"rb") as f:
-        for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
-    table("FILE HASH", [("File",path),("SHA-256",h.hexdigest())])
+    path = Prompt.ask("[bright_cyan]Local file path[/]").strip()
+    digest = hashlib.sha256()
+    with open(path, "rb") as file_handle:
+        for chunk in iter(lambda: file_handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    show_table("LOCAL FILE SHA-256", [("FILE", path), ("SHA-256", digest.hexdigest())])
+
 
 def password_audit():
-    pw=Prompt.ask("Test string only (do NOT enter a real password)", password=True)
-    checks=[("12+ characters",len(pw)>=12),("Uppercase",bool(re.search(r"[A-Z]",pw))),("Lowercase",bool(re.search(r"[a-z]",pw))),("Number",bool(re.search(r"\\d",pw))),("Symbol",bool(re.search(r"[^A-Za-z0-9]",pw)))]
-    table("PASSWORD HEURISTIC", [(k,"PASS" if v else "FAIL") for k,v in checks])
-    console.print("[dim]Local heuristic only; not a breach check or security guarantee.[/]")
+    password = Prompt.ask(
+        "[yellow]Demo string only — never enter a real password[/]",
+        password=True,
+    )
+    checks = [
+        ("12+ CHARACTERS", len(password) >= 12),
+        ("UPPERCASE", bool(re.search(r"[A-Z]", password))),
+        ("LOWERCASE", bool(re.search(r"[a-z]", password))),
+        ("NUMBER", bool(re.search(r"\d", password))),
+        ("SYMBOL", bool(re.search(r"[^A-Za-z0-9]", password))),
+    ]
+    show_table("PASSWORD STRENGTH DEMO", [
+        (label, "[green]PASS[/]" if passed else "[red]NEEDS WORK[/]")
+        for label, passed in checks
+    ])
+    console.print("[dim]Local heuristic only — not a breach check or security guarantee.[/]")
 
-ACTIONS=[("System intelligence",system_info),("IP / DNS intelligence",ip_dns),("Limited TCP port check",port_check),("Website security headers",website_headers),("SSL/TLS certificate",tls_check),("URL analyzer",url_info),("Local file SHA-256",hash_file),("Password strength demo",password_audit)]
+
+ACTIONS = [
+    ("System intelligence", "Device and OS details", system_info),
+    ("IP / DNS intelligence", "Address and hostname lookup", ip_dns),
+    ("Limited TCP port check", "Small authorized port check", port_check),
+    ("Website security headers", "Review HTTP response headers", website_headers),
+    ("SSL / TLS certificate", "Inspect certificate details", tls_check),
+    ("URL analyzer", "Break down a web address", url_info),
+    ("Local file SHA-256", "Calculate a local file hash", hash_file),
+    ("Password strength demo", "Test a sample phrase only", password_audit),
+]
+
+
+def show_menu():
+    menu = Table(
+        title="[bold bright_cyan] MODULE SELECTOR [/]",
+        box=box.ROUNDED,
+        border_style=RED,
+        header_style="bold white",
+        expand=True,
+        pad_edge=False,
+    )
+    menu.add_column("ID", style="bold bright_red", width=4, justify="center")
+    menu.add_column("MODULE", style="bold white", ratio=2)
+    menu.add_column("DESCRIPTION", style=MUTED, ratio=3, overflow="fold")
+    for index, (name, description, _) in enumerate(ACTIONS, 1):
+        menu.add_row(f"{index:02d}", name, description)
+    menu.add_row("[bold red]00[/]", "[bold red]Exit console[/]", "Close NEXUS X")
+    console.print(menu)
+    console.print(
+        Align.center("[dim]Select a module number  •  Ctrl+C to quit[/]")
+    )
+
+
 def main():
     banner()
+    show_table("DEVICE STATUS", system_snapshot())
     while True:
-        for i,(name,_) in enumerate(ACTIONS,1): console.print(f"[bright_red]{i:02d}[/]  {name}")
-        console.print("[bright_red]00[/]  Exit")
-        try: choice=IntPrompt.ask("\n[bold bright_red]NEXUS X[/] Select",default=0)
-        except (KeyboardInterrupt,EOFError): break
-        if choice==0: break
-        if 1<=choice<=len(ACTIONS):
-            try: ACTIONS[choice-1][1]()
-            except Exception as e: console.print(f"[red]Error: {e}[/]")
-        else: console.print("[yellow]Choose a listed option.[/]")
-    console.print("[bright_red]NEXUS X offline. Stay authorized.[/]")
-if __name__=="__main__": main()
+        show_menu()
+        try:
+            choice = IntPrompt.ask("\n[bold bright_red]NEXUS X[/]  [white]SELECT MODULE[/]", default=0)
+        except (KeyboardInterrupt, EOFError):
+            break
+        if choice == 0:
+            break
+        if 1 <= choice <= len(ACTIONS):
+            console.print()
+            console.print(Panel(
+                f"[bold white]{ACTIONS[choice - 1][0]}[/]",
+                border_style=RED,
+                box=box.ROUNDED,
+            ))
+            try:
+                ACTIONS[choice - 1][2]()
+            except Exception as exc:
+                console.print(f"[bold red]MODULE ERROR[/] [white]{exc}[/]")
+            console.input("\n[dim]Press Enter to return to the module selector...[/]")
+            console.print()
+        else:
+            console.print("[yellow]Invalid selection. Choose a listed module.[/]")
+    console.print(Panel(
+        Align.center("[bold bright_red]NEXUS X OFFLINE[/]\n[dim]Stay safe. Test only with permission.[/]"),
+        border_style=RED,
+        box=box.DOUBLE,
+    ))
+
+
+if __name__ == "__main__":
+    main()
