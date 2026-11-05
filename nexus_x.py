@@ -17,19 +17,23 @@ RED = "bright_red"
 UA = "NEXUS-X/2.0 defensive diagnostics"
 
 def banner():
-    C.clear()
-    art = Text()
-    art.append("███╗   ██╗███████╗██╗  ██╗██╗   ██╗███████╗\n", style="bold bright_red")
-    art.append("████╗  ██║██╔════╝╚██╗██╔╝██║   ██║██╔════╝\n", style="bold bright_red")
-    art.append("██╔██╗ ██║█████╗   ╚███╔╝ ██║   ██║███████╗\n", style="bold red")
-    art.append("██║╚██╗██║██╔══╝   ██╔██╗ ╚██╗ ██╔╝╚════██║\n", style="bold red")
-    art.append("██║ ╚████║███████╗██╔╝ ██╗ ╚████╔╝ ███████║\n", style="bold bright_red")
-    art.append("╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝  ╚═══╝  ╚══════╝\n", style="bold red")
-    art.append("      ░▒▓  D R I P  /  P I X E L  ▓▒░", style="bold bright_red")
-    C.print(Align.center(art))
-    C.print(Align.center("[bold bright_red]NEXUS X v2.0[/] [dim]// 28 ETHICAL TOOLS[/]"))
-    C.print(Align.center("[dim]github.com/Janrahat/nexus-x[/]"))
-    C.print(Align.center("[bold green]● LOCAL READY[/]  [bold yellow]● AUTHORIZED USE ONLY[/]\n"))
+    # Termux-friendly redraw: clear the visible screen and scrollback so old
+    # menus/logos do not stack above the current menu on Android terminals.
+    C.file.write("\\033[3J\\033[2J\\033[H")
+    C.file.flush()
+    C.print(Panel(
+        Align.center(
+            "[bold bright_red]N E X U S   X[/]\n"
+            "[bold bright_red]▓ ▓ ▓  D R I P  /  P I X E L  ▓ ▓ ▓[/]\n"
+            "[bold bright_cyan]POWER  /  INTELLIGENCE  /  SECURITY[/]\n"
+            "[dim]NEXUS X v2.0  •  28 ETHICAL TOOLS[/]\n"
+            "[dim]github.com/Janrahat/nexus-x[/]\n"
+            "[bold green]● LOCAL READY[/]  [bold yellow]● AUTHORIZED USE ONLY[/]"
+        ),
+        border_style=RED,
+        box=box.HEAVY,
+        padding=(0, 1)
+    ))
 
 def show(title, rows):
     t=Table(title=f"[bold bright_red]{title}[/]",box=box.SQUARE,border_style=RED,expand=True)
